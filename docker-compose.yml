@@ -1,0 +1,38 @@
+version: '3'
+services:
+  db:
+    image: nouchka/sqlite3
+    volumes:
+      - ./data:/data
+    ports:
+      - "5432:5432"
+  jupyter:
+    build:
+      context: .
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/data
+    depends_on:
+      - db
+    command: ["start-notebook.sh", "--NotebookApp.token=''"]
+    user: root  # Exécuter le conteneur Jupyter en tant que root
+  setup_db:
+    build:
+      context: .
+    command: ["python", "/home/jovyan/scripts/setup_db.py"]
+    depends_on:
+      - db
+    volumes:
+      - ./data:/data
+    user: root  # Exécuter ce service en tant que root
+  import_data:
+    build:
+      context: .
+    command: ["python", "/home/jovyan/scripts/import_data.py"]
+    depends_on:
+      - setup_db
+    volumes:
+      - ./data:/data
+    user: root  # Exécuter ce service en tant que root
